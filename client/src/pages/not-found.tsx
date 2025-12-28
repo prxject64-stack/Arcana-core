@@ -1,21 +1,33 @@
-import { Card, CardContent } from "@/components/ui/card";
-import { AlertCircle } from "lucide-react";
+import { Link } from "wouter";
+import { CyberButton } from "@/components/CyberButton";
+import { AlertTriangle } from "lucide-react";
 
 export default function NotFound() {
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-gray-50">
-      <Card className="w-full max-w-md mx-4">
-        <CardContent className="pt-6">
-          <div className="flex mb-4 gap-2">
-            <AlertCircle className="h-8 w-8 text-red-500" />
-            <h1 className="text-2xl font-bold text-gray-900">404 Page Not Found</h1>
-          </div>
-
-          <p className="mt-4 text-sm text-gray-600">
-            Did you forget to add the page to the router?
-          </p>
-        </CardContent>
-      </Card>
+    <div className="min-h-screen w-full flex flex-col items-center justify-center bg-background text-foreground p-4">
+      <div className="text-center space-y-6 max-w-md">
+        <AlertTriangle className="w-24 h-24 text-primary mx-auto opacity-80" />
+        
+        <h1 className="text-8xl font-display font-black text-white glitch-text neon-text">
+          404
+        </h1>
+        
+        <p className="text-xl font-mono text-muted-foreground uppercase tracking-widest">
+          Sector Not Found
+        </p>
+        
+        <p className="text-sm text-muted-foreground">
+          The requested data coordinates could not be located in the neural net.
+        </p>
+        
+        <div className="pt-8">
+          <Link href="/">
+            <CyberButton variant="secondary">
+              Return to Grid
+            </CyberButton>
+          </Link>
+        </div>
+      </div>
     </div>
   );
 }
