@@ -12,6 +12,7 @@ const __dirname = path.dirname(__filename);
 const args = process.argv.slice(2);
 let dataDir = "./blockchain_data";
 let port = 9001;
+const priorityNodes: string[] = [];
 
 for (let i = 0; i < args.length; i++) {
   if (args[i] === "--data-dir" && i + 1 < args.length) {
@@ -20,6 +21,9 @@ for (let i = 0; i < args.length; i++) {
   if (args[i] === "--port" && i + 1 < args.length) {
     port = parseInt(args[i + 1], 10);
   }
+  if (args[i] === "--add-priority-node" && i + 1 < args.length) {
+    priorityNodes.push(args[i + 1]);
+  }
   if (args[i] === "--help") {
     console.log(`
 arcanad - Arcana Coin Node Daemon
@@ -27,9 +31,10 @@ arcanad - Arcana Coin Node Daemon
 Usage: arcanad [options]
 
 Options:
-  --data-dir <path>   Directory to store blockchain data (default: ./blockchain_data)
-  --port <number>     Port to listen on (default: 9001)
-  --help              Show this help message
+  --data-dir <path>         Directory to store blockchain data (default: ./blockchain_data)
+  --port <number>           Port to listen on (default: 9001)
+  --add-priority-node <ip>  Add a node to connect to (IP:PORT)
+  --help                    Show this help message
     `);
     process.exit(0);
   }
@@ -39,6 +44,10 @@ Options:
 if (!fs.existsSync(dataDir)) {
   fs.mkdirSync(dataDir, { recursive: true });
   console.log(`Created data directory: ${dataDir}`);
+}
+
+if (priorityNodes.length > 0) {
+  console.log(`Priority nodes added: ${priorityNodes.join(", ")}`);
 }
 
 // Start daemon
