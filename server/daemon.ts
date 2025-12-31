@@ -24,6 +24,10 @@ for (let i = 0; i < args.length; i++) {
   if (args[i] === "--add-priority-node" && i + 1 < args.length) {
     priorityNodes.push(args[i + 1]);
   }
+  if (args[i] === "print_cn") {
+    console.log(`Connected nodes: ${priorityNodes.length > 0 ? priorityNodes.join(", ") : "None"}`);
+    process.exit(0);
+  }
   if (args[i] === "--help") {
     console.log(`
 arcanad - Arcana Coin Node Daemon

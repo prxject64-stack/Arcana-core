@@ -32,11 +32,18 @@ async function main() {
     console.log('  getmininginfo      Get current mining difficulty and hashrate');
     console.log('  getbalance         Get total coin supply (demo)');
     console.log('  getblocks          Get latest blocks');
+    console.log('  print_cn           Print connected nodes (demo)');
     process.exit(0);
   }
 
   try {
-    if (command === 'getmininginfo') {
+    if (command === 'print_cn') {
+      const stats = await makeRequest('/api/network/stats');
+      // For demo, we'll return a static or mock list if not implemented in API
+      console.log('Connected Nodes:');
+      console.log('  10.0.0.139:18080 (Priority)');
+      console.log('  192.168.1.45:18080 (Inbound)');
+    } else if (command === 'getmininginfo') {
       const stats = await makeRequest('/api/network/stats');
       console.log('Mining Info:');
       console.log(`  Difficulty: ${stats.difficulty}`);
