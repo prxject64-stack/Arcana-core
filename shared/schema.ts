@@ -38,6 +38,9 @@ export const blocks = pgTable("blocks", {
   timestamp: timestamp("timestamp").defaultNow(),
   difficulty: numeric("difficulty"),
   nonce: integer("nonce"),
+  merkleRoot: text("merkle_root"),
+  transactionCount: integer("transaction_count").default(0),
+  size: integer("size").default(0),
 });
 
 // === RELATIONS ===
@@ -69,6 +72,10 @@ export type CreateTransactionRequest = {
 
 export type MineBlockRequest = {
   minerAddress: string;
+};
+
+export type BlockWithTransactions = Block & {
+  transactions: Transaction[];
 };
 
 // Response types

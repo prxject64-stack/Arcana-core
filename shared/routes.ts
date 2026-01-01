@@ -122,7 +122,23 @@ export const api = {
       responses: {
         200: z.array(z.custom<typeof blocks.$inferSelect>()),
       },
-    }
+    },
+    block: {
+      method: 'GET' as const,
+      path: '/api/blocks/:height',
+      responses: {
+        200: z.custom<Block & { transactions: Transaction[] }>(),
+        404: errorSchemas.notFound,
+      },
+    },
+    transaction: {
+      method: 'GET' as const,
+      path: '/api/transactions/:hash',
+      responses: {
+        200: z.custom<typeof transactions.$inferSelect>(),
+        404: errorSchemas.notFound,
+      },
+    },
   },
 };
 

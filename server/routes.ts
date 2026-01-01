@@ -237,6 +237,20 @@ export async function registerRoutes(
     });
   });
 
+  app.get(api.network.block.path, async (req, res) => {
+    const height = parseInt(req.params.height);
+    if (isNaN(height)) return res.status(400).json({ message: "Invalid block height" });
+    const block = await storage.getBlockByHeight(height);
+    if (!block) return res.status(404).json({ message: "Block not found" });
+    res.json(block);
+  });
+
+  app.get(api.network.transaction.path, async (req, res) => {
+    const tx = await storage.getTransactionByHash(req.params.hash);
+    if (!tx) return res.status(404).json({ message: "Transaction not found" });
+    res.json(tx);
+  });
+
   // Seed genesis block if empty
   const latest = await storage.getLatestBlock();
   if (!latest) {

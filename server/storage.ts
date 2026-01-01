@@ -25,6 +25,9 @@ export interface IStorage {
   createBlock(block: Omit<Block, "id" | "timestamp">): Promise<Block>;
   getLatestBlock(): Promise<Block | undefined>;
   getBlocks(limit: number): Promise<Block[]>;
+  getBlockByHeight(height: number): Promise<(Block & { transactions: Transaction[] }) | undefined>;
+  getTransactionByHash(hash: string): Promise<Transaction | undefined>;
+  getTransactionsByBlockHeight(height: number): Promise<Transaction[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -108,11 +111,69 @@ export class DatabaseStorage implements IStorage {
     return block;
   }
 
+  async getBlockByHeight(height: number): Promise<Block | undefined> {
+    const [block] = await db.select()
+      .from(blocks)
+      .where(eq(blocks.height, height));
+    return block;
+  }
+
+  async getTransactionsByBlock(height: number): Promise<Transaction[]> {
+    return await db.select()
+      .from(transactions)
+      .where(eq(transactions.blockHeight, height));
+  }
+
+  async getTransactionByHash(hash: string): Promise<Transaction | undefined> {
+    const [tx] = await db.select()
+      .from(transactions)
+      .where(eq(transactions.hash, hash));
+    return tx;
+  }
+
   async getBlocks(limit: number): Promise<Block[]> {
     return await db.select()
       .from(blocks)
       .orderBy(desc(blocks.height))
       .limit(limit);
+  }
+
+  async getBlockByHeight(height: number): Promise<(Block & { transactions: Transaction[] }) | undefined> {
+    const [block] = await db.select().from(blocks).where(eq(blocks.height, height));
+    if (!block) return undefined;
+    const txs = await this.getTransactionsByBlockHeight(height);
+    return { ...block, transactions: txs };
+  }
+
+  async getTransactionByHash(hash: string): Promise<Transaction | undefined> {
+    const [tx] = await db.select().from(transactions).where(eq(transactions.hash, hash));
+    return tx;
+  }
+
+  async getTransactionsByBlockHeight(height: number): Promise<Transaction[]> {
+    return await db.select().from(transactions).where(eq(transactions.blockHeight, height));
+  }
+  async getBlock(height: number): Promise<Block & { transactions: Transaction[] }> {
+    const [block] = await db.select().from(blocks).where(eq(blocks.height, height));
+    if (!block) throw new Error("Block not found");
+    const txs = await db.select().from(transactions).where(eq(transactions.blockHeight, height));
+    return { ...block, transactions: txs };
+  }
+
+  async getTransaction(hash: string): Promise<Transaction | undefined> {
+    const [tx] = await db.select().from(transactions).where(eq(transactions.hash, hash));
+    return tx;
+  }
+  async getBlockByHeight(height: number): Promise<Block & { transactions: Transaction[] } | undefined> {
+    const [block] = await db.select().from(blocks).where(eq(blocks.height, height));
+    if (!block) return undefined;
+    const txs = await db.select().from(transactions).where(eq(transactions.blockHeight, height));
+    return { ...block, transactions: txs };
+  }
+
+  async getTransactionByHash(hash: string): Promise<Transaction | undefined> {
+    const [tx] = await db.select().from(transactions).where(eq(transactions.hash, hash));
+    return tx;
   }
 }
 
