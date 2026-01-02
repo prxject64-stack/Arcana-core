@@ -1,4 +1,4 @@
-name: Build Arcana Miner (Bypass Mode)
+name: Rescue Build (Fresh Clone)
 
 on: [push, workflow_dispatch]
 
@@ -6,34 +6,32 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
-      # removed 'submodules: recursive' to prevent early crash
-
     - name: Install Dependencies
       run: |
         sudo apt-get update
         sudo apt-get install -y build-essential cmake pkg-config \
-        libboost-all-dev libssl-dev libzmq3-dev libunbound-dev \
+        git libboost-all-dev libssl-dev libzmq3-dev libunbound-dev \
         libsodium-dev libunwind8-dev liblzma-dev libreadline-dev \
         libldns-dev libexpat1-dev doxygen graphviz libpgm-dev \
         libhidapi-dev libusb-1.0-0-dev libprotobuf-dev protobuf-compiler
 
-    - name: Force Load Submodules (Ignore Errors)
+    - name: Clone Fresh Engine (Bypassing Local Files)
       run: |
-        # We try to update, but if gtest fails, we continue anyway (|| true)
-        git submodule update --init --recursive || true
+        # We download the source FRESH to ensure no corruption
+        git clone --recursive https://github.com/monero-project/monero.git fresh_engine
 
     - name: Build Engine
       run: |
-        cd engine
+        cd fresh_engine
         mkdir -p build
         cd build
-        # We explicitly turn off tests so missing gtest doesn't matter
+        # Configure the build
         cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=OFF
+        # Compile
         make -j2
 
     - name: Upload Miner
       uses: actions/upload-artifact@v4
       with:
         name: arcanad-linux
-        path: engine/build/bin/monerod
+        path: fresh_engine/build/bin/monerod
