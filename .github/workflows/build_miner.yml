@@ -1,4 +1,4 @@
-name: Build Arcana Miner
+name: Build Arcana Miner (Bulletproof)
 
 on: [push, workflow_dispatch]
 
@@ -7,27 +7,32 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
+      with:
+        submodules: recursive
 
-    - name: Install Dependencies
+    - name: Install All Dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y build-essential cmake libboost-all-dev libssl-dev pkg-config
+        sudo apt-get install -y build-essential cmake pkg-config \
+        libboost-all-dev libssl-dev libzmq3-dev libunbound-dev \
+        libsodium-dev libunwind8-dev liblzma-dev libreadline-dev \
+        libldns-dev libexpat1-dev doxygen graphviz libpgm-dev \
+        libhidapi-dev libusb-1.0-0-dev libprotobuf-dev protobuf-compiler
 
-    - name: Force Fresh Engine Download
+    - name: Fix Submodules (Just in case)
       run: |
-        rm -rf engine
-        git clone --recursive https://github.com/monero-project/monero.git engine
+        git submodule update --init --force --recursive
 
     - name: Build Engine
       run: |
         cd engine
-        mkdir build
+        mkdir -p build
         cd build
-        cmake ..
+        cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=OFF
         make -j2
 
     - name: Upload Miner
       uses: actions/upload-artifact@v4
       with:
-        name: arcana-miner-linux
+        name: arcanad-linux
         path: engine/build/bin/monerod
