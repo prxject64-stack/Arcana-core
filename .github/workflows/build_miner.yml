@@ -1,4 +1,4 @@
-name: Rescue Build (Fresh Clone)
+name: Build Static Arcana Miner
 
 on: [push, workflow_dispatch]
 
@@ -15,23 +15,18 @@ jobs:
         libldns-dev libexpat1-dev doxygen graphviz libpgm-dev \
         libhidapi-dev libusb-1.0-0-dev libprotobuf-dev protobuf-compiler
 
-    - name: Clone Fresh Engine (Bypassing Local Files)
+    - name: Clone Fresh Engine
       run: |
-        # We download the source FRESH to ensure no corruption
         git clone --recursive https://github.com/monero-project/monero.git fresh_engine
 
-    - name: Build Engine
+    - name: Build Static Engine
       run: |
         cd fresh_engine
-        mkdir -p build
-        cd build
-        # Configure the build
-        cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=OFF
-        # Compile
-        make -j2
+        # We use the official 'release-static' target which handles all the dependency gluing
+        make release-static -j2
 
     - name: Upload Miner
       uses: actions/upload-artifact@v4
       with:
-        name: arcanad-linux
-        path: fresh_engine/build/bin/monerod
+        name: arcanad-static
+        path: fresh_engine/build/release/bin/monerod
