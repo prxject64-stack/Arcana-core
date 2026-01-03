@@ -1,4 +1,4 @@
-name: Reconstruction Build (Manual Dependency Fix)
+name: Final Hardened Build (Celeron Specialist)
 
 on: [push, workflow_dispatch]
 
@@ -6,71 +6,58 @@ jobs:
   build:
     runs-on: ubuntu-22.04
     steps:
-    - name: Checkout Arcana (Skip Broken Submodules)
+    - name: Checkout Soul (Your Code)
       uses: actions/checkout@v3
       with:
-        submodules: false # <--- CRITICAL: We do this manually below.
+        path: soul
+        submodules: false
 
-    - name: Manually Install Critical Dependencies
+    - name: Checkout Body (Clean Engine)
+      uses: actions/checkout@v3
+      with:
+        repository: monero-project/monero
+        path: body
+        submodules: recursive
+
+    - name: Surgical Integration
       run: |
-        echo "Manually reconstructing external libraries..."
-        
-        # 1. RandomX (The Mining Algorithm)
-        rm -rf external/randomx
-        git clone https://github.com/tevador/RandomX.git external/randomx
-        
-        # 2. RapidJSON (API Support)
-        rm -rf external/rapidjson
-        git clone https://github.com/Tencent/rapidjson.git external/rapidjson
-        
-        # 3. Supercop (Crypto Library)
-        rm -rf external/supercop
-        git clone https://github.com/monero-project/supercop.git external/supercop
-        
-        # 4. EasyLogging++ (Logging)
-        rm -rf external/easylogging++
-        git clone https://github.com/amrayn/easyloggingpp.git external/easylogging++
-        
-        # 5. Trezor/Pubsub (We create empty placeholders to trick CMake if needed)
-        mkdir -p external/trezor-common
-        
-        echo "Reconstruction complete."
+        # This force-aligns your engine folder to the body folder
+        # It handles the path mismatch that caused the last failure
+        if [ -d "soul/engine" ]; then
+          rsync -av soul/engine/ body/
+        else
+          rsync -av --exclude='.git' soul/ body/
+        fi
 
-    - name: Install System Dependencies
+    - name: Install System Tools
       run: |
         sudo apt-get update
-        sudo apt-get install -y build-essential cmake pkg-config \
-        git libboost-all-dev libssl-dev libzmq3-dev libunbound-dev \
-        libsodium-dev libunwind8-dev liblzma-dev libreadline-dev \
-        libldns-dev libexpat1-dev doxygen graphviz libpgm-dev \
-        libhidapi-dev libusb-1.0-0-dev libprotobuf-dev protobuf-compiler
+        sudo apt-get install -y build-essential cmake pkg-config git libboost-all-dev libssl-dev libzmq3-dev libunbound-dev libsodium-dev libunwind8-dev liblzma-dev libreadline-dev libldns-dev libexpat1-dev libpgm-dev libhidapi-dev libusb-1.0-0-dev libprotobuf-dev protobuf-compiler
 
-    - name: Build Arcana (Reconstructed + Safe Mode)
+    - name: The Celeron Compile
       run: |
-        # We need to find where the CMakeLists.txt is.
-        # If it's in 'engine', we go there. If root, we stay.
-        if [ -d "engine" ]; then cd engine; fi
+        cd body
+        mkdir -p build && cd build
         
-        mkdir -p build
-        cd build
-        
-        # FLAGS EXPLAINED:
-        # -DBUILD_TESTS=OFF: Don't look for 'gtest' (The module that failed)
-        # -march=x86-64: Generic CPU instructions
-        # -mno-avx: Disable AVX (Fixes Celeron Crash)
-        # -DARCH="x86-64": Configures Monero for generic hardware
+        # -DMANUAL_SUBMODULES=1: Bypasses the git error
+        # -DARCH="x86-64": Forces generic instructions
+        # -mno-avx -mno-aes: Prevents Celeron crash
         
         cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=OFF \
-        -DARCH="x86-64" \
-        -DCMAKE_CXX_FLAGS="-march=x86-64 -mtune=generic -mno-avx" \
-        -DCMAKE_C_FLAGS="-march=x86-64 -mtune=generic -mno-avx"
+        -DMANUAL_SUBMODULES=1 -DARCH="x86-64" \
+        -DCMAKE_CXX_FLAGS="-march=x86-64 -mtune=generic -mno-avx -mno-aes" \
+        -DCMAKE_C_FLAGS="-march=x86-64 -mtune=generic -mno-avx -mno-aes"
         
         make -j2
 
-    - name: Upload Miner
+    - name: Release the Miner
+    # Using '|| true' ensures we find the file regardless of where the builder put it
+      run: |
+        find body/build/bin/ -name "monerod" -exec cp {} ./arcanad \; || true
+        find body/build/bin/ -name "arcanad" -exec cp {} ./arcanad \; || true
+
+    - name: Upload
       uses: actions/upload-artifact@v4
       with:
-        name: arcanad-reconstructed
-        path: |
-          build/bin/monerod
-          engine/build/bin/monerod
+        name: arcanad-final-fixed
+        path: arcanad
