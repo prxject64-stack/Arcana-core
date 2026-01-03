@@ -1,16 +1,42 @@
-name: Legacy Defender (Your Code + Celeron Safe)
+name: Reconstruction Build (Manual Dependency Fix)
 
 on: [push, workflow_dispatch]
 
 jobs:
   build:
-    runs-on: ubuntu-22.04 # Matches your Chromebook OS
+    runs-on: ubuntu-22.04
     steps:
-    - uses: actions/checkout@v3
+    - name: Checkout Arcana (Skip Broken Submodules)
+      uses: actions/checkout@v3
       with:
-        submodules: recursive
+        submodules: false # <--- CRITICAL: We do this manually below.
 
-    - name: Install Dependencies
+    - name: Manually Install Critical Dependencies
+      run: |
+        echo "Manually reconstructing external libraries..."
+        
+        # 1. RandomX (The Mining Algorithm)
+        rm -rf external/randomx
+        git clone https://github.com/tevador/RandomX.git external/randomx
+        
+        # 2. RapidJSON (API Support)
+        rm -rf external/rapidjson
+        git clone https://github.com/Tencent/rapidjson.git external/rapidjson
+        
+        # 3. Supercop (Crypto Library)
+        rm -rf external/supercop
+        git clone https://github.com/monero-project/supercop.git external/supercop
+        
+        # 4. EasyLogging++ (Logging)
+        rm -rf external/easylogging++
+        git clone https://github.com/amrayn/easyloggingpp.git external/easylogging++
+        
+        # 5. Trezor/Pubsub (We create empty placeholders to trick CMake if needed)
+        mkdir -p external/trezor-common
+        
+        echo "Reconstruction complete."
+
+    - name: Install System Dependencies
       run: |
         sudo apt-get update
         sudo apt-get install -y build-essential cmake pkg-config \
@@ -19,27 +45,32 @@ jobs:
         libldns-dev libexpat1-dev doxygen graphviz libpgm-dev \
         libhidapi-dev libusb-1.0-0-dev libprotobuf-dev protobuf-compiler
 
-    - name: Fix Submodules (Just in case)
+    - name: Build Arcana (Reconstructed + Safe Mode)
       run: |
-        git submodule update --init --recursive --force
-
-    - name: Build Arcana (Safe Mode)
-      run: |
-        cd engine
+        # We need to find where the CMakeLists.txt is.
+        # If it's in 'engine', we go there. If root, we stay.
+        if [ -d "engine" ]; then cd engine; fi
+        
         mkdir -p build
         cd build
-        # THE FIX:
-        # We use -DARCH="x86-64" to tell Monero's internal system to be generic.
-        # We use CMAKE_CXX_FLAGS to force the compiler to disable AVX.
+        
+        # FLAGS EXPLAINED:
+        # -DBUILD_TESTS=OFF: Don't look for 'gtest' (The module that failed)
+        # -march=x86-64: Generic CPU instructions
+        # -mno-avx: Disable AVX (Fixes Celeron Crash)
+        # -DARCH="x86-64": Configures Monero for generic hardware
+        
         cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=OFF \
         -DARCH="x86-64" \
-        -DCMAKE_CXX_FLAGS="-march=x86-64 -mno-avx" \
-        -DCMAKE_C_FLAGS="-march=x86-64 -mno-avx"
+        -DCMAKE_CXX_FLAGS="-march=x86-64 -mtune=generic -mno-avx" \
+        -DCMAKE_C_FLAGS="-march=x86-64 -mtune=generic -mno-avx"
         
         make -j2
 
     - name: Upload Miner
       uses: actions/upload-artifact@v4
       with:
-        name: arcanad-legacy
-        path: engine/build/bin/monerod
+        name: arcanad-reconstructed
+        path: |
+          build/bin/monerod
+          engine/build/bin/monerod
