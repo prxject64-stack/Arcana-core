@@ -1,4 +1,4 @@
-name: Build Static Arcana Miner
+name: Master Static Build (Depends System)
 
 on: [push, workflow_dispatch]
 
@@ -6,27 +6,35 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - name: Install Dependencies
+    - uses: actions/checkout@v3
+      with:
+        submodules: recursive
+
+    - name: Install Basic Tools
       run: |
         sudo apt-get update
-        sudo apt-get install -y build-essential cmake pkg-config \
-        git libboost-all-dev libssl-dev libzmq3-dev libunbound-dev \
-        libsodium-dev libunwind8-dev liblzma-dev libreadline-dev \
-        libldns-dev libexpat1-dev doxygen graphviz libpgm-dev \
-        libhidapi-dev libusb-1.0-0-dev libprotobuf-dev protobuf-compiler
+        sudo apt-get install -y build-essential cmake pkg-config git \
+        libtool automake bsdmainutils python3 bison mozilla-devscripts
 
-    - name: Clone Fresh Engine
+    - name: Build Dependencies (The Heavy Lifting)
       run: |
-        git clone --recursive https://github.com/monero-project/monero.git fresh_engine
+        # This builds the entire environment from scratch.
+        # It guarantees the output runs on ANY Linux (including your Chromebook).
+        cd contrib/depends
+        make HOST=x86_64-linux-gnu -j2
 
-    - name: Build Static Engine
+    - name: Build Arcana Engine
       run: |
-        cd fresh_engine
-        # We use the official 'release-static' target which handles all the dependency gluing
-        make release-static -j2
+        # Tell CMake to use the custom dependencies we just built
+        export PREFIX=$(pwd)/contrib/depends/x86_64-linux-gnu
+        
+        mkdir build
+        cd build
+        cmake .. -DCMAKE_TOOLCHAIN_FILE=../contrib/depends/x86_64-linux-gnu/share/toolchain.cmake -DCMAKE_BUILD_TYPE=Release
+        make -j2
 
-    - name: Upload Miner
+    - name: Upload Master Binary
       uses: actions/upload-artifact@v4
       with:
-        name: arcanad-static
-        path: fresh_engine/build/release/bin/monerod
+        name: arcanad-master-linux
+        path: build/bin/monerod
