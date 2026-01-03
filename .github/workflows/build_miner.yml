@@ -1,40 +1,34 @@
-name: Master Static Build (Depends System)
+name: Compatible Build (Ubuntu 22.04)
 
 on: [push, workflow_dispatch]
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04  # <--- THIS IS THE MAGIC FIX. It matches your Chromebook.
     steps:
-    - uses: actions/checkout@v3
-      with:
-        submodules: recursive
-
-    - name: Install Basic Tools
+    - name: Install Dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y build-essential cmake pkg-config git \
-        libtool automake bsdmainutils python3 bison mozilla-devscripts
+        sudo apt-get install -y build-essential cmake pkg-config \
+        git libboost-all-dev libssl-dev libzmq3-dev libunbound-dev \
+        libsodium-dev libunwind8-dev liblzma-dev libreadline-dev \
+        libldns-dev libexpat1-dev doxygen graphviz libpgm-dev \
+        libhidapi-dev libusb-1.0-0-dev libprotobuf-dev protobuf-compiler
 
-    - name: Build Dependencies (The Heavy Lifting)
+    - name: Clone Fresh Engine
       run: |
-        # This builds the entire environment from scratch.
-        # It guarantees the output runs on ANY Linux (including your Chromebook).
-        cd contrib/depends
-        make HOST=x86_64-linux-gnu -j2
+        git clone --recursive https://github.com/monero-project/monero.git fresh_engine
 
-    - name: Build Arcana Engine
+    - name: Build Engine
       run: |
-        # Tell CMake to use the custom dependencies we just built
-        export PREFIX=$(pwd)/contrib/depends/x86_64-linux-gnu
-        
-        mkdir build
+        cd fresh_engine
+        mkdir -p build
         cd build
-        cmake .. -DCMAKE_TOOLCHAIN_FILE=../contrib/depends/x86_64-linux-gnu/share/toolchain.cmake -DCMAKE_BUILD_TYPE=Release
+        cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=OFF
         make -j2
 
-    - name: Upload Master Binary
+    - name: Upload Miner
       uses: actions/upload-artifact@v4
       with:
-        name: arcanad-master-linux
-        path: build/bin/monerod
+        name: arcanad-compatible
+        path: fresh_engine/build/bin/monerod
