@@ -1,4 +1,4 @@
-name: The Master Key (Prefix Fix)
+name: Architect Final Seal (Address Fix)
 
 on: [push, workflow_dispatch]
 
@@ -19,7 +19,7 @@ jobs:
         path: body
         submodules: recursive
 
-    - name: Surgical Integration & Prefix Force
+    - name: Surgical Prefix Injection
       run: |
         # 1. Overlay your branding
         if [ -d "soul/engine" ]; then
@@ -28,39 +28,35 @@ jobs:
           rsync -av --exclude='.git' soul/ body/
         fi
         
-        # 2. THE MASTER KEY: We force the 'arc' prefix directly into the config file
-        # This ensures the daemon RECOGNIZES your address format.
-        # We are looking for the 'CRYPTONOTE_PUBLIC_ADDRESS_BASE58_PREFIX' line.
-        
+        # 2. THE FIX: Force the Address Prefix
+        # We find the specific line in cryptonote_config.h and overwrite it.
+        # This ensures the daemon RECOGNIZES 'arc' as a valid address.
         cd body/src
-        # This command finds the prefix line and replaces the number with the Arcana 'arc' logic
-        # For 'arc', the prefix value usually needs to be defined in your config.h
-        echo "Updating address validation logic..."
+        find . -name "cryptonote_config.h" -exec sed -i 's/CRYPTONOTE_PUBLIC_ADDRESS_BASE58_PREFIX = [0-9]*/CRYPTONOTE_PUBLIC_ADDRESS_BASE58_PREFIX = 2862/g' {} +
+        echo "Address Prefix hard-coded to Arcana standards."
 
     - name: Install System Tools
       run: |
         sudo apt-get update
         sudo apt-get install -y build-essential cmake pkg-config git libboost-all-dev libssl-dev libzmq3-dev libunbound-dev libsodium-dev libunwind8-dev liblzma-dev libreadline-dev libldns-dev libexpat1-dev libpgm-dev libhidapi-dev libusb-1.0-0-dev libprotobuf-dev protobuf-compiler
 
-    - name: The Celeron Compile (Final)
+    - name: The Celeron Compile
       run: |
         cd body
         mkdir -p build && cd build
-        
         cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=OFF \
         -DMANUAL_SUBMODULES=1 -DARCH="x86-64" \
         -DCMAKE_CXX_FLAGS="-march=x86-64 -mtune=generic -mno-avx -mno-aes" \
         -DCMAKE_C_FLAGS="-march=x86-64 -mtune=generic -mno-avx -mno-aes"
-        
         make -j1
 
     - name: Release the Miner
       run: |
-        find body/build/bin/ -name "monerod" -exec cp {} ./arcanad \;
-        find body/build/bin/ -name "arcanad" -exec cp {} ./arcanad \;
+        find body/build/bin/ -name "monerod" -exec cp {} ./arcanad-arc-final \;
+        find body/build/bin/ -name "arcanad" -exec cp {} ./arcanad-arc-final \;
 
     - name: Upload
       uses: actions/upload-artifact@v4
       with:
-        name: arcanad-arc-enabled
-        path: arcanad
+        name: arcanad-arc-final
+        path: arcanad-arc-final
