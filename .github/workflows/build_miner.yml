@@ -1,4 +1,4 @@
-name: Universal Arcana Build (Celeron N4020 Verified)
+name: Nuclear Safe Build (x86-64)
 
 on: [push, workflow_dispatch]
 
@@ -19,18 +19,17 @@ jobs:
         libldns-dev libexpat1-dev doxygen graphviz libpgm-dev \
         libhidapi-dev libusb-1.0-0-dev libprotobuf-dev protobuf-compiler
 
-    - name: Build Generic Engine
+    - name: Build Safe Engine
       run: |
-        cd engine
-        mkdir -p build
-        cd build
-        # -DARCH="x86-64" forces generic instructions (Fixes 'Illegal Instruction' crash)
-        # We also keep BUILD_TESTS=OFF to save time
-        cmake .. -DCMAKE_BUILD_TYPE=Release -DARCH="x86-64" -DBUILD_TESTS=OFF
-        make -j2
+        # We explicitly set the Architecture to generic x86-64
+        # This disables AVX and ensures it runs on Celeron
+        export ARCH=x86-64
+        
+        # We use 'make release' which handles all the flags automatically
+        make release -j2
 
     - name: Upload Miner
       uses: actions/upload-artifact@v4
       with:
-        name: arcanad-universal
-        path: engine/build/bin/monerod
+        name: arcanad-nuclear
+        path: build/release/bin/monerod
