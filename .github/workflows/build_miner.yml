@@ -1,11 +1,15 @@
-name: Compatible Build (Ubuntu 22.04)
+name: Universal Arcana Build (Celeron N4020 Verified)
 
 on: [push, workflow_dispatch]
 
 jobs:
   build:
-    runs-on: ubuntu-22.04  # <--- THIS IS THE MAGIC FIX. It matches your Chromebook.
+    runs-on: ubuntu-22.04
     steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: recursive
+
     - name: Install Dependencies
       run: |
         sudo apt-get update
@@ -15,20 +19,18 @@ jobs:
         libldns-dev libexpat1-dev doxygen graphviz libpgm-dev \
         libhidapi-dev libusb-1.0-0-dev libprotobuf-dev protobuf-compiler
 
-    - name: Clone Fresh Engine
+    - name: Build Generic Engine
       run: |
-        git clone --recursive https://github.com/monero-project/monero.git fresh_engine
-
-    - name: Build Engine
-      run: |
-        cd fresh_engine
+        cd engine
         mkdir -p build
         cd build
-        cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=OFF
+        # -DARCH="x86-64" forces generic instructions (Fixes 'Illegal Instruction' crash)
+        # We also keep BUILD_TESTS=OFF to save time
+        cmake .. -DCMAKE_BUILD_TYPE=Release -DARCH="x86-64" -DBUILD_TESTS=OFF
         make -j2
 
     - name: Upload Miner
       uses: actions/upload-artifact@v4
       with:
-        name: arcanad-compatible
-        path: fresh_engine/build/bin/monerod
+        name: arcanad-universal
+        path: engine/build/bin/monerod
