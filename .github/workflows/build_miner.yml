@@ -1,10 +1,10 @@
-name: Nuclear Safe Build (x86-64)
+name: Legacy Defender (Your Code + Celeron Safe)
 
 on: [push, workflow_dispatch]
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-22.04 # Matches your Chromebook OS
     steps:
     - uses: actions/checkout@v3
       with:
@@ -19,17 +19,27 @@ jobs:
         libldns-dev libexpat1-dev doxygen graphviz libpgm-dev \
         libhidapi-dev libusb-1.0-0-dev libprotobuf-dev protobuf-compiler
 
-    - name: Build Safe Engine
+    - name: Fix Submodules (Just in case)
       run: |
-        # We explicitly set the Architecture to generic x86-64
-        # This disables AVX and ensures it runs on Celeron
-        export ARCH=x86-64
+        git submodule update --init --recursive --force
+
+    - name: Build Arcana (Safe Mode)
+      run: |
+        cd engine
+        mkdir -p build
+        cd build
+        # THE FIX:
+        # We use -DARCH="x86-64" to tell Monero's internal system to be generic.
+        # We use CMAKE_CXX_FLAGS to force the compiler to disable AVX.
+        cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=OFF \
+        -DARCH="x86-64" \
+        -DCMAKE_CXX_FLAGS="-march=x86-64 -mno-avx" \
+        -DCMAKE_C_FLAGS="-march=x86-64 -mno-avx"
         
-        # We use 'make release' which handles all the flags automatically
-        make release -j2
+        make -j2
 
     - name: Upload Miner
       uses: actions/upload-artifact@v4
       with:
-        name: arcanad-nuclear
-        path: build/release/bin/monerod
+        name: arcanad-legacy
+        path: engine/build/bin/monerod
