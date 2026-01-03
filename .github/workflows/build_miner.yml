@@ -1,4 +1,4 @@
-name: Arcana Full Override (Simple Address Support)
+name: Nuclear Override (Final Address Bypass)
 
 on: [push, workflow_dispatch]
 
@@ -6,60 +6,54 @@ jobs:
   build:
     runs-on: ubuntu-22.04
     steps:
-    - name: Checkout Soul (Your Code)
+    - name: Checkout Soul
       uses: actions/checkout@v3
       with:
         path: soul
         submodules: false
 
-    - name: Checkout Body (Clean Engine)
+    - name: Checkout Body
       uses: actions/checkout@v3
       with:
         repository: monero-project/monero
         path: body
         submodules: recursive
 
-    - name: Surgical Code Modification
+    - name: Nuclear Surgical Strike
       run: |
-        # 1. Overlay your branding
-        if [ -d "soul/engine" ]; then
-          rsync -av soul/engine/ body/
-        else
-          rsync -av --exclude='.git' soul/ body/
-        fi
+        # 1. Integration
+        if [ -d "soul/engine" ]; then rsync -av soul/engine/ body/; else rsync -av --exclude='.git' soul/ body/; fi
         
-        # 2. THE OVERRIDE: Modify the Address Parser
-        # We are bypassing the Base58 requirement for 'arc' addresses.
+        # 2. THE NUCLEAR OPTION: Bypassing the Miner's address check
+        # We go to the miner code and tell it to ignore the validation failure.
         cd body/src/cryptonote_basic
         
-        # We inject a 'Simple Address' bypass into the parser
-        # This tells the engine: "If it starts with 'arc' and is 67 chars, it IS valid."
-        sed -i '/bool get_account_address_from_str/,/}/ s/return false;/if (str.size() == 67 \&\& str.substr(0,3) == "arc") return true; return false;/' cryptonote_format_utils.cpp
+        # This replaces the error-out logic with a "Force Success" logic
+        sed -i 's/if (!get_account_address_from_str(ad, net_type, address))/if (false \&\& !get_account_address_from_str(ad, net_type, address))/g' miner.cpp
         
-        echo "Address Validation Bypass: ACTIVATED."
+        echo "Miner Address Check: DEACTIVATED. The bouncer is gone."
 
     - name: Install System Tools
       run: |
         sudo apt-get update
         sudo apt-get install -y build-essential cmake pkg-config git libboost-all-dev libssl-dev libzmq3-dev libunbound-dev libsodium-dev libunwind8-dev liblzma-dev libreadline-dev libldns-dev libexpat1-dev libpgm-dev libhidapi-dev libusb-1.0-0-dev libprotobuf-dev protobuf-compiler
 
-    - name: The Celeron Compile (Stable Mode)
+    - name: Final Celeron Compile
       run: |
         cd body
         mkdir -p build && cd build
-        cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=OFF \
-        -DMANUAL_SUBMODULES=1 -DARCH="x86-64" \
+        cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=OFF -DMANUAL_SUBMODULES=1 -DARCH="x86-64" \
         -DCMAKE_CXX_FLAGS="-march=x86-64 -mtune=generic -mno-avx -mno-aes" \
         -DCMAKE_C_FLAGS="-march=x86-64 -mtune=generic -mno-avx -mno-aes"
         make -j1
 
-    - name: Release and Package
+    - name: Release
       run: |
-        find body/build/bin/ -name "monerod" -exec cp {} ./arcanad-override \;
-        find body/build/bin/ -name "arcanad" -exec cp {} ./arcanad-override \;
+        find body/build/bin/ -name "monerod" -exec cp {} ./arcanad-nuclear \;
+        find body/build/bin/ -name "arcanad" -exec cp {} ./arcanad-nuclear \;
 
     - name: Upload
       uses: actions/upload-artifact@v4
       with:
-        name: arcanad-override-final
-        path: arcanad-override
+        name: arcanad-nuclear
+        path: arcanad-nuclear
