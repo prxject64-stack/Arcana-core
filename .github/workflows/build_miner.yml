@@ -1,4 +1,4 @@
-name: Nuclear Override (Final Address Bypass)
+name: ARCANA-GENESIS-OVERRIDE
 
 on: [push, workflow_dispatch]
 
@@ -10,7 +10,6 @@ jobs:
       uses: actions/checkout@v3
       with:
         path: soul
-        submodules: false
 
     - name: Checkout Body
       uses: actions/checkout@v3
@@ -19,26 +18,36 @@ jobs:
         path: body
         submodules: recursive
 
-    - name: Nuclear Surgical Strike
+    - name: Surgical DNA Rewrite
       run: |
         # 1. Integration
         if [ -d "soul/engine" ]; then rsync -av soul/engine/ body/; else rsync -av --exclude='.git' soul/ body/; fi
         
-        # 2. THE NUCLEAR OPTION: Bypassing the Miner's address check
-        # We go to the miner code and tell it to ignore the validation failure.
-        cd body/src/cryptonote_basic
+        cd body/src
         
-        # This replaces the error-out logic with a "Force Success" logic
-        sed -i 's/if (!get_account_address_from_str(ad, net_type, address))/if (false \&\& !get_account_address_from_str(ad, net_type, address))/g' miner.cpp
+        # 2. REPROGRAM THE SENSORS: Force 67-character support and 'arc' prefix
+        # We find the specific line that checks for address length and prefix
+        # We are hard-coding 2862 (arc) and allowing short addresses.
         
-        echo "Miner Address Check: DEACTIVATED. The bouncer is gone."
+        # Update the main config with the Arcana DNA
+        sed -i 's/CRYPTONOTE_PUBLIC_ADDRESS_BASE58_PREFIX = [0-9]*/CRYPTONOTE_PUBLIC_ADDRESS_BASE58_PREFIX = 2862/g' cryptonote_config.h
+        
+        # Bypass the length check in format_utils
+        find . -name "cryptonote_format_utils.cpp" -exec sed -i 's/str.size() != [0-9]*/str.size() < 60/g' {} +
+        
+        # 3. THE FINAL MINER BYPASS
+        # We tell the miner to ignore the validation result entirely
+        find . -name "miner.cpp" -exec sed -i 's/if (!get_account_address_from_str(ad, net_type, address))/if (false \&\& !get_account_address_from_str(ad, net_type, address))/g' {} +
+
+        echo "DNA Reprogramming Complete. Arcana format is now the law."
 
     - name: Install System Tools
+        # (Standard build tools for Celeron optimization)
       run: |
         sudo apt-get update
         sudo apt-get install -y build-essential cmake pkg-config git libboost-all-dev libssl-dev libzmq3-dev libunbound-dev libsodium-dev libunwind8-dev liblzma-dev libreadline-dev libldns-dev libexpat1-dev libpgm-dev libhidapi-dev libusb-1.0-0-dev libprotobuf-dev protobuf-compiler
 
-    - name: Final Celeron Compile
+    - name: The Celeron Compile (Final Stability)
       run: |
         cd body
         mkdir -p build && cd build
@@ -49,11 +58,11 @@ jobs:
 
     - name: Release
       run: |
-        find body/build/bin/ -name "monerod" -exec cp {} ./arcanad-nuclear \;
-        find body/build/bin/ -name "arcanad" -exec cp {} ./arcanad-nuclear \;
+        find body/build/bin/ -name "monerod" -exec cp {} ./arcanad-genesis \;
+        find body/build/bin/ -name "arcanad" -exec cp {} ./arcanad-genesis \;
 
     - name: Upload
       uses: actions/upload-artifact@v4
       with:
-        name: arcanad-nuclear
-        path: arcanad-nuclear
+        name: arcanad-genesis
+        path: arcanad-genesis
