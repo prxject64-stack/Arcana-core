@@ -1,4 +1,4 @@
-name: ARCANA-GENERATOR-ONLY
+name: ARCANA-IDENTITY-FIX
 
 on: [push, workflow_dispatch]
 
@@ -16,24 +16,30 @@ jobs:
     - name: Surgical DNA Strike (2862 Prefix)
       run: |
         cd body/src
-        # Hardcode the Arcana identity for the generator
         sed -i 's/CRYPTONOTE_PUBLIC_ADDRESS_BASE58_PREFIX = [0-9]*/CRYPTONOTE_PUBLIC_ADDRESS_BASE58_PREFIX = 2862/g' cryptonote_config.h
 
-    - name: Install Wallet Dependencies
+    - name: Install System Tools
       run: |
         sudo apt-get update
         sudo apt-get install -y build-essential cmake pkg-config git libboost-all-dev libssl-dev libzmq3-dev libunbound-dev libsodium-dev libunwind8-dev liblzma-dev libreadline-dev libldns-dev libexpat1-dev libpgm-dev libhidapi-dev libusb-1.0-0-dev libprotobuf-dev protobuf-compiler
 
-    - name: Forced Wallet Build
+    - name: The Total Build
       run: |
         cd body
         mkdir -p build && cd build
         cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=OFF -DMANUAL_SUBMODULES=1 -DARCH="x86-64"
-        # We only build the wallet library and the CLI
-        make -j$(nproc) wallet_cli
+        # We build 'all' instead of a specific target name
+        make -j$(nproc)
 
-    - name: Upload Generator
+    - name: Search and Rescue Generator
+      run: |
+        mkdir -p deploy
+        # Hunt for the wallet binary even if the name is slightly different
+        find body/build/bin/ -type f -executable -name "*wallet-cli*" -exec cp {} ./deploy/arcana-wallet-generator \;
+        find body/build/bin/ -type f -executable -name "monerod" -exec cp {} ./deploy/arcanad-standard \;
+
+    - name: Upload Suite
       uses: actions/upload-artifact@v4
       with:
-        name: Arcana-Generator
-        path: body/build/bin/monero-wallet-cli
+        name: Arcana-Full-Suite
+        path: deploy/
