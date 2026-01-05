@@ -1,0 +1,24 @@
+nohup: ignoring input
+
+> rest-express@1.0.0 dev
+> NODE_ENV=development tsx server/index.ts --host
+
+/home/prxject64/Arcana-core/node_modules/pg-pool/index.js:45
+    Error.captureStackTrace(err)
+          ^
+
+Error: connect ECONNREFUSED 127.0.0.1:5432
+    at /home/prxject64/Arcana-core/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async <anonymous> (/home/prxject64/Arcana-core/node_modules/src/node-postgres/session.ts:104:19)
+    at async DatabaseStorage.getLatestBlock (/home/prxject64/Arcana-core/server/storage.ts:107:21)
+    at async registerRoutes (/home/prxject64/Arcana-core/server/routes.ts:255:18)
+    at async <anonymous> (/home/prxject64/Arcana-core/server/index.ts:63:3) {
+  errno: -111,
+  code: 'ECONNREFUSED',
+  syscall: 'connect',
+  address: '127.0.0.1',
+  port: 5432
+}
+
+Node.js v20.19.6
