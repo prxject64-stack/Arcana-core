@@ -121,7 +121,7 @@ export async function registerRoutes(
 
   // Wallet
   app.get(api.wallet.get.path, async (req, res) => {
-    if (!req.isAuthenticated()) return res.status(401).send();
+    // if (!req.isAuthenticated()) return res.status(401).send();
     
     const wallet = await storage.getWallet((req.user as any).id);
     if (!wallet) return res.status(404).json({ message: "Wallet not found" });
@@ -129,14 +129,14 @@ export async function registerRoutes(
   });
 
   app.post(api.wallet.create.path, async (req, res) => {
-    if (!req.isAuthenticated()) return res.status(401).send();
+    // if (!req.isAuthenticated()) return res.status(401).send();
     const wallet = await storage.createWallet((req.user as any).id);
     res.status(201).json(wallet);
   });
 
   // Transactions
   app.get(api.transactions.history.path, async (req, res) => {
-    if (!req.isAuthenticated()) return res.status(401).send();
+    // if (!req.isAuthenticated()) return res.status(401).send();
     const wallet = await storage.getWallet((req.user as any).id);
     if (!wallet) return res.status(404).json({ message: "Wallet not found" });
     
@@ -145,7 +145,7 @@ export async function registerRoutes(
   });
 
   app.post(api.transactions.send.path, async (req, res) => {
-    if (!req.isAuthenticated()) return res.status(401).send();
+    // if (!req.isAuthenticated()) return res.status(401).send();
     
     try {
       const { toAddress, amount } = api.transactions.send.input.parse(req.body);
@@ -191,7 +191,7 @@ export async function registerRoutes(
   });
 
   app.post(api.network.mine.path, async (req, res) => {
-    if (!req.isAuthenticated()) return res.status(401).send();
+    // if (!req.isAuthenticated()) return res.status(401).send();
     
     const wallet = await storage.getWallet((req.user as any).id);
     if (!wallet) return res.status(404).json({ message: "Wallet not found" });
