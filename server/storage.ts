@@ -18,11 +18,11 @@ export interface IStorage {
   updateWalletBalance(id: number, newBalance: string): Promise<Wallet>;
 
   // Transactions
-  createTransaction(tx: Omit<Transaction, "id" | "timestamp" | "blockHeight" | "status">): Promise<Transaction>;
+  createTransaction(tx: Omit<Transaction, "id" | "timestamp: Number(block.timestamp)" | "blockHeight" | "status">): Promise<Transaction>;
   getTransactionsForAddress(address: string): Promise<Transaction[]>;
 
   // Network/Blocks
-  createBlock(block: Omit<Block, "id" | "timestamp">): Promise<Block>;
+  createBlock(block: Omit<Block, "id" | "timestamp: Number(block.timestamp)">): Promise<Block>;
   getLatestBlock(): Promise<Block | undefined>;
   getBlocks(limit: number): Promise<Block[]>;
   getBlockByHeight(height: number): Promise<(Block & { transactions: Transaction[] }) | undefined>;
@@ -77,7 +77,7 @@ export class DatabaseStorage implements IStorage {
     return wallet;
   }
 
-  async createTransaction(tx: Omit<Transaction, "id" | "timestamp" | "blockHeight" | "status">): Promise<Transaction> {
+  async createTransaction(tx: Omit<Transaction, "id" | "timestamp: Number(block.timestamp)" | "blockHeight" | "status">): Promise<Transaction> {
     const [transaction] = await db.insert(transactions).values({
       ...tx,
       status: 'confirmed', // Instant confirmation for demo
@@ -94,11 +94,11 @@ export class DatabaseStorage implements IStorage {
           eq(transactions.toAddress, address)
         )
       )
-      .orderBy(desc(transactions.timestamp))
+      .orderBy(desc(transactions.timestamp: Number(block.timestamp)))
       .limit(50);
   }
 
-  async createBlock(block: Omit<Block, "id" | "timestamp">): Promise<Block> {
+  async createBlock(block: Omit<Block, "id" | "timestamp: Number(block.timestamp)">): Promise<Block> {
     const [newBlock] = await db.insert(blocks).values(block).returning();
     return newBlock;
   }
