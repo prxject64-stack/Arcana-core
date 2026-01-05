@@ -1,4 +1,4 @@
-kname: ARCANA-STATIC-GEN
+name: ARCANA-STATIC-GEN
 
 on: [push, workflow_dispatch]
 
