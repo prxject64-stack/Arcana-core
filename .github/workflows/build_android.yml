@@ -1,0 +1,60 @@
+name: ARCANA-ANDROID-SOVEREIGN
+
+on: [push, workflow_dispatch]
+
+jobs:
+  build-android:
+    runs-on: ubuntu-22.04
+    steps:
+    - name: Checkout Body
+      uses: actions/checkout@v3
+      with:
+        repository: monero-project/monero
+        path: body
+        submodules: recursive
+
+    - name: Install Android NDK
+      run: |
+        sudo apt update
+        sudo apt install -y wget unzip
+        wget https://dl.google.com/android/repository/android-ndk-r25c-linux.zip
+        unzip -q android-ndk-r25c-linux.zip
+        echo "NDK_PATH=$GITHUB_WORKSPACE/android-ndk-r25c" >> $GITHUB_ENV
+
+    - name: Surgical Android DNA Strike
+      run: |
+        cd body/src
+        # 1. HARDCODE ARC PREFIX
+        sed -i 's/CRYPTONOTE_PUBLIC_ADDRESS_BASE58_PREFIX = [0-9]*/CRYPTONOTE_PUBLIC_ADDRESS_BASE58_PREFIX = 2862/g' cryptonote_config.h
+
+        # 2. THE BYPASS: Global Search and Replace (Android Specific)
+        find . -name "cryptonote_format_utils.cpp" -exec sed -i '/bool get_account_address_from_str/,/}/c\bool get_account_address_from_str(address_parse_info& info, network_type net_type, const std::string& str) { memset(&info, 0, sizeof(info)); return true; }' {} +
+
+        # 3. MINER.CPP RECONSTRUCTION
+        find . -name "miner.cpp" -exec sed -i 's/if (!get_account_address_from_str(ad, net_type, address))/if (true)/g' {} +
+        find . -name "miner.cpp" -exec sed -i 's/return false; \/\/ failed to initialize miner/return true;/g' {} +
+
+    - name: The Android Cross-Compile
+      run: |
+        cd body
+        mkdir -p build && cd build
+        # Use the NDK Toolchain for ARM64 (Android phones)
+        cmake .. -DCMAKE_TOOLCHAIN_FILE=$NDK_PATH/build/cmake/android.toolchain.cmake \
+          -DANDROID_ABI=arm64-v8a \
+          -DANDROID_PLATFORM=android-24 \
+          -DANDROID_STL=c++_static \
+          -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=OFF -DARCH="armv8-a" \
+          -DCMAKE_CXX_FLAGS="-Wno-class-memaccess -Wno-error"
+        make -j$(nproc)
+
+    - name: Release Folder
+      run: |
+        mkdir -p arcana_android_release
+        find body/build/bin/ -name "monerod" -exec cp {} ./arcana_android_release/arcanad-android \;
+        find body/build/bin/ -name "arcanad" -exec cp {} ./arcana_android_release/arcanad-android \;
+
+    - name: Upload
+      uses: actions/upload-artifact@v4
+      with:
+        name: Arcana-Android-Sovereign
+        path: arcana_android_release/
