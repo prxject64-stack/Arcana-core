@@ -1,4 +1,4 @@
-name: ARCANA-SUITE-V2
+name: ARCANA-GENERATOR-FORCED
 
 on: [push, workflow_dispatch]
 
@@ -6,45 +6,40 @@ jobs:
   build:
     runs-on: ubuntu-22.04
     steps:
-    - name: Checkout Body
+    - name: Checkout
       uses: actions/checkout@v3
       with:
         repository: monero-project/monero
         path: body
         submodules: recursive
 
-    - name: Surgical DNA Strike (Founder Identity)
+    - name: Surgical DNA Strike (2862 Prefix)
       run: |
         cd body/src
-        # 1. HARDCODE ARC PREFIX (2862)
         sed -i 's/CRYPTONOTE_PUBLIC_ADDRESS_BASE58_PREFIX = [0-9]*/CRYPTONOTE_PUBLIC_ADDRESS_BASE58_PREFIX = 2862/g' cryptonote_config.h
 
-        # 2. PREMINE INJECTION: Set first block reward to 70,000 ARC
-        # 70,000 * 10^12 (atomic units)
-        find . -name "cryptonote_config.h" -exec sed -i 's/GENESIS_BLOCK_REWARD = [0-9]*/GENESIS_BLOCK_REWARD = 70000000000000/g' {} +
-
-    - name: Install System Tools
+    - name: Install Wallet-Specific Tools
       run: |
         sudo apt-get update
         sudo apt-get install -y build-essential cmake pkg-config git libboost-all-dev libssl-dev libzmq3-dev libunbound-dev libsodium-dev libunwind8-dev liblzma-dev libreadline-dev libldns-dev libexpat1-dev libpgm-dev libhidapi-dev libusb-1.0-0-dev libprotobuf-dev protobuf-compiler
 
-    - name: The Full Package Compile
+    - name: Forced Wallet Compile
       run: |
         cd body
         mkdir -p build && cd build
         cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=OFF -DMANUAL_SUBMODULES=1 -DARCH="x86-64"
-        # Using a broader make command to ensure targets are hit
-        make -j$(nproc)
+        # Force the compiler to build ONLY the wallet-cli
+        make -j$(nproc) monero-wallet-cli
 
-    - name: Package Tools
+    - name: Release Generator
       run: |
-        mkdir -p arcana_tools
-        # Find the binaries wherever they were built and rename them for your brand
-        find body/build/bin/ -name "monerod" -exec cp {} ./arcana_tools/arcanad-standard \;
-        find body/build/bin/ -name "monero-wallet-cli" -exec cp {} ./arcana-wallet-generator \;
+        mkdir -p generator_out
+        find body/build/bin/ -name "moneronero-wallet-cli" -exec cp {} ./generator_out/arcana-wallet-generator \;
+        # If the find above misses, try direct copy
+        cp body/build/bin/monero-wallet-cli ./generator_out/arcana-wallet-generator || true
 
-    - name: Upload
+    - name: Upload Generator
       uses: actions/upload-artifact@v4
       with:
-        name: Arcana-Full-Suite
-        path: arcana_tools/
+        name: Arcana-Generator-Only
+        path: generator_out/
