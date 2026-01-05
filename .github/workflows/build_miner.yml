@@ -1,10 +1,10 @@
-name: ARCANA-IDENTITY-FIX
+kname: ARCANA-STATIC-GEN
 
 on: [push, workflow_dispatch]
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-20.04  # Older runner for better compatibility
     steps:
     - name: Checkout
       uses: actions/checkout@v3
@@ -23,23 +23,21 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y build-essential cmake pkg-config git libboost-all-dev libssl-dev libzmq3-dev libunbound-dev libsodium-dev libunwind8-dev liblzma-dev libreadline-dev libldns-dev libexpat1-dev libpgm-dev libhidapi-dev libusb-1.0-0-dev libprotobuf-dev protobuf-compiler
 
-    - name: The Total Build
+    - name: Static Compilation
       run: |
         cd body
         mkdir -p build && cd build
-        cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=OFF -DMANUAL_SUBMODULES=1 -DARCH="x86-64"
-        # We build 'all' instead of a specific target name
-        make -j$(nproc)
+        # -DSTATIC=ON is the key to fixing your error
+        cmake .. -DCMAKE_BUILD_TYPE=Release -DSTATIC=ON -DBUILD_TESTS=OFF -DMANUAL_SUBMODULES=1 -DARCH="x86-64" -DUSE_DEVICE_TREZOR=OFF
+        make -j$(nproc) monero-wallet-cli
 
-    - name: Search and Rescue Generator
+    - name: Search and Rescue
       run: |
         mkdir -p deploy
-        # Hunt for the wallet binary even if the name is slightly different
-        find body/build/bin/ -type f -executable -name "*wallet-cli*" -exec cp {} ./deploy/arcana-wallet-generator \;
-        find body/build/bin/ -type f -executable -name "monerod" -exec cp {} ./deploy/arcanad-standard \;
+        find body/build/bin/ -type f -executable -name "monero-wallet-cli" -exec cp {} ./deploy/arcana-wallet-generator \;
 
-    - name: Upload Suite
+    - name: Upload Static Generator
       uses: actions/upload-artifact@v4
       with:
-        name: Arcana-Full-Suite
+        name: Arcana-Static-Generator
         path: deploy/
