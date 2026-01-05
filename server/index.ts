@@ -1,3 +1,4 @@
+const pg = require("pg"); pg.types.setTypeParser(20, (val) => val);
 BigInt.prototype.toJSON = function() { return Number(this); };
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
