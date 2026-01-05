@@ -1,4 +1,4 @@
-name: ARCANA-UNIVERSAL-BUILD
+name: ARCANA-FORCE-WALLET
 
 on: [push, workflow_dispatch]
 
@@ -16,7 +16,6 @@ jobs:
     - name: Surgical DNA Strike (2862 Prefix)
       run: |
         cd body/src
-        # Set Prefix and Premine
         sed -i 's/CRYPTONOTE_PUBLIC_ADDRESS_BASE58_PREFIX = [0-9]*/CRYPTONOTE_PUBLIC_ADDRESS_BASE58_PREFIX = 2862/g' cryptonote_config.h
         find . -name "cryptonote_config.h" -exec sed -i 's/GENESIS_BLOCK_REWARD = [0-9]*/GENESIS_BLOCK_REWARD = 70000000000000/g' {} +
 
@@ -25,23 +24,22 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y build-essential cmake pkg-config git libboost-all-dev libssl-dev libzmq3-dev libunbound-dev libsodium-dev libunwind8-dev liblzma-dev libreadline-dev libldns-dev libexpat1-dev libpgm-dev libhidapi-dev libusb-1.0-0-dev libprotobuf-dev protobuf-compiler
 
-    - name: Universal Build Ignition
+    - name: Forced Target Build
       run: |
         cd body
         mkdir -p build && cd build
         cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=OFF -DMANUAL_SUBMODULES=1 -DARCH="x86-64"
-        # Build EVERYTHING. This avoids the 'No rule to make target' error.
-        make -j$(nproc)
+        # Force build the wallet-cli specifically
+        cmake --build . --target monero-wallet-cli -j$(nproc)
+        # Force build the daemon
+        cmake --build . --target monerod -j$(nproc)
 
-    - name: Search and Rescue Binaries
+    - name: Search and Rescue
       run: |
         mkdir -p deploy
-        # Search the entire build folder for the wallet and daemon binaries
-        find body/build/bin/ -type f -executable -name "*wallet-cli*" -exec cp {} ./deploy/arcana-wallet-generator \;
-        find body/build/bin/ -type f -executable -name "*monerod*" -exec cp {} ./deploy/arcanad-standard \;
-        
-        # Security fallback: If rename fails, try to find by common names
-        [ ! -f ./deploy/arcana-wallet-generator ] && find body/build/ -type f -executable -name "monero-wallet-cli" -exec cp {} ./deploy/arcana-wallet-generator \; || true
+        # Use a deep search to find the wallet tool and rename it
+        find body/build/ -type f -executable -name "monero-wallet-cli" -exec cp {} ./deploy/arcana-wallet-generator \;
+        find body/build/ -type f -executable -name "monerod" -exec cp {} ./deploy/arcanad-standard \;
 
     - name: Upload Suite
       uses: actions/upload-artifact@v4
