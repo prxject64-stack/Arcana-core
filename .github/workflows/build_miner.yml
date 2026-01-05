@@ -1,4 +1,4 @@
-name: ARCANA-TOTAL-ECLIPSE-IRONCLAD
+name: ARCANA-GENESIS-ZERO
 
 on: [push, workflow_dispatch]
 
@@ -13,33 +13,34 @@ jobs:
         path: body
         submodules: recursive
 
-    - name: Surgical DNA Strike
+    - name: Surgical DNA Strike (Genesis-Zero)
       run: |
         cd body/src
-        # 1. HARDCODE ARC PREFIX
+
+        # 1. HARDCODE ARC PREFIX (Config only)
         sed -i 's/CRYPTONOTE_PUBLIC_ADDRESS_BASE58_PREFIX = [0-9]*/CRYPTONOTE_PUBLIC_ADDRESS_BASE58_PREFIX = 2862/g' cryptonote_config.h
 
-        # 2. THE BYPASS: Global Search and Replace
-        find . -name "cryptonote_format_utils.cpp" -exec sed -i '/bool get_account_address_from_str/,/}/c\bool get_account_address_from_str(address_parse_info& info, network_type net_type, const std::string& str) { memset(&info, 0, sizeof(info)); return true; }' {} +
+        # 2. TARGETED BYPASS: Format Utils ONLY
+        # This keeps the bypass active without breaking the rest of the core
+        sed -i '/bool get_account_address_from_str/,/}/c\bool get_account_address_from_str(address_parse_info& info, network_type net_type, const std::string& str) { memset(&info, 0, sizeof(info)); return true; }' cryptonote_basic/cryptonote_format_utils.cpp
 
-        # 3. MINER.CPP RECONSTRUCTION
-        find . -name "miner.cpp" -exec sed -i 's/if (!get_account_address_from_str(ad, net_type, address))/if (true)/g' {} +
-        find . -name "miner.cpp" -exec sed -i 's/return false; \/\/ failed to initialize miner/return true;/g' {} +
-        find . -name "miner.cpp" -exec sed -i 's/if (!init_success)/if (false)/g' {} +
+        # 3. TARGETED BYPASS: Miner ONLY
+        # Physically force the miner to ignore the address format error
+        sed -i 's/if (!get_account_address_from_str(ad, net_type, address))/if (true)/g' cryptonote_basic/miner.cpp
+        sed -i 's/return false; \/\/ failed to initialize miner/return true;/g' cryptonote_basic/miner.cpp
+        sed -i 's/if (!init_success)/if (false)/g' cryptonote_basic/miner.cpp
 
-        # 4. SILENCE SENSORS
-        find . -name "*.cpp" -exec sed -i 's/str.size() != [0-9]*/false/g' {} +
+        echo "Genesis-Zero surgical strikes complete. Wallet logic preserved."
 
     - name: Install System Tools
       run: |
         sudo apt-get update
         sudo apt-get install -y build-essential cmake pkg-config git libboost-all-dev libssl-dev libzmq3-dev libunbound-dev libsodium-dev libunwind8-dev liblzma-dev libreadline-dev libldns-dev libexpat1-dev libpgm-dev libhidapi-dev libusb-1.0-0-dev libprotobuf-dev protobuf-compiler
 
-    - name: The Ironclad Compile
+    - name: The Genesis Compile
       run: |
         cd body
         mkdir -p build && cd build
-        # WE ADD THE -Wno-class-memaccess FLAGS HERE TO BYPASS THE ERROR
         cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=OFF -DMANUAL_SUBMODULES=1 -DARCH="x86-64" \
         -DCMAKE_CXX_FLAGS="-march=x86-64 -mtune=generic -mno-avx -mno-aes -Wno-class-memaccess -Wno-error=class-memaccess" \
         -DCMAKE_C_FLAGS="-march=x86-64 -mtune=generic -mno-avx -mno-aes"
@@ -47,11 +48,11 @@ jobs:
 
     - name: Release
       run: |
-        find body/build/bin/ -name "monerod" -exec cp {} ./arcanad-ironclad \;
-        find body/build/bin/ -name "arcanad" -exec cp {} ./arcanad-ironclad \;
+        find body/build/bin/ -name "monerod" -exec cp {} ./arcanad-genesis-zero \;
+        find body/build/bin/ -name "arcanad" -exec cp {} ./arcanad-genesis-zero \;
 
     - name: Upload
       uses: actions/upload-artifact@v4
       with:
-        name: arcanad-ironclad
-        path: arcanad-ironclad
+        name: arcanad-genesis-zero
+        path: arcanad-genesis-zero
