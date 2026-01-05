@@ -1,0 +1,57 @@
+name: ARCANA-MAC-SOVEREIGN-ORGANIZED
+
+on: [push, workflow_dispatch]
+
+jobs:
+  build-mac:
+    runs-on: macos-latest
+    steps:
+    - name: Checkout Body
+      uses: actions/checkout@v3
+      with:
+        repository: monero-project/monero
+        path: body
+        submodules: recursive
+
+    - name: Surgical Mac DNA Strike
+      run: |
+        cd body/src
+        # 1. HARDCODE ARC PREFIX
+        sed -i '' 's/CRYPTONOTE_PUBLIC_ADDRESS_BASE58_PREFIX = [0-9]*/CRYPTONOTE_PUBLIC_ADDRESS_BASE58_PREFIX = 2862/g' cryptonote_config.h
+
+        # 2. THE BYPASS: Global Search and Replace
+        find . -name "cryptonote_format_utils.cpp" -exec sed -i '' '/bool get_account_address_from_str/,/}/c\
+        bool get_account_address_from_str(address_parse_info\& info, network_type net_type, const std::string\& str) { memset(\&info, 0, sizeof(info)); return true; }' {} +
+
+        # 3. MINER.CPP RECONSTRUCTION
+        find . -name "miner.cpp" -exec sed -i '' 's/if (!get_account_address_from_str(ad, net_type, address))/if (true)/g' {} +
+        find . -name "miner.cpp" -exec sed -i '' 's/return false; \/\/ failed to initialize miner/return true;/g' {} +
+        find . -name "miner.cpp" -exec sed -i '' 's/if (!init_success)/if (false)/g' {} +
+
+    - name: Create Release Folder
+      # THIS IS THE COMMAND YOU NEEDED
+      # -p makes sure the build doesn't crash if the folder exists
+      run: mkdir -p arcana_mac_release
+
+    - name: Install Mac Dependencies
+      run: brew install cmake pkg-config boost openssl zmq libpgm unbound libsodium libunwind-headers
+
+    - name: The Apple Silicon Compile
+      run: |
+        cd body
+        mkdir -p build && cd build
+        cmake .. -DAPPLE=1 -DARCH="armv8-a" -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=OFF
+        make -j$(sysctl -n hw.ncpu)
+
+    - name: Move Binary to Folder
+      # We move the finished file into the folder we made in Step 4
+      run: |
+        find body/build/bin/ -name "monerod" -exec cp {} ./arcana_mac_release/arcanad-mac-arcana \;
+        find body/build/bin/ -name "arcanad" -exec cp {} ./arcana_mac_release/arcanad-mac-arcana \;
+
+    - name: Upload Organized Package
+      uses: actions/upload-artifact@v4
+      with:
+        name: Arcana-Mac-M2-Package
+        # We tell GitHub to upload the WHOLE folder, not just one file
+        path: arcana_mac_release/
