@@ -211,7 +211,7 @@ export async function registerRoutes(
       height: newHeight,
       hash: newHash,
       previousHash: previousHash,
-      difficulty: "123456",
+      difficulty: "1",
       nonce: Math.floor(Math.random() * 1000000),
     });
 
