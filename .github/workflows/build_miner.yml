@@ -1,4 +1,4 @@
-name: ARCANA-ABSOLUTE-ZERO-V3
+name: ARCANA-ABSOLUTE-ZERO-V4
 
 on: [push, workflow_dispatch]
 
@@ -13,19 +13,19 @@ jobs:
         path: body
         submodules: recursive
 
-    - name: Surgical DNA Strike (Absolute-Zero-V3)
+    - name: Surgical DNA Strike (Absolute-Zero-V4)
       run: |
         cd body/src
 
         # 1. HARDCODE ARC PREFIX
         sed -i 's/CRYPTONOTE_PUBLIC_ADDRESS_BASE58_PREFIX = [0-9]*/CRYPTONOTE_PUBLIC_ADDRESS_BASE58_PREFIX = 2862/g' cryptonote_config.h
 
-        # 2. DEEP MOCK: Format Utils Bypass (Decoder)
+        # 2. DEEP MOCK: Format Utils Bypass
         sed -i '/bool get_account_address_from_str/,/}/c\bool get_account_address_from_str(address_parse_info\& info, network_type net_type, const std::string\& str) { memset(\&info, 0, sizeof(info)); return true; }' cryptonote_basic/cryptonote_format_utils.cpp
 
-        # 3. DAEMON BYPASS: Neutralize the Command Line Check
-        # This stops the "wrong format, starting daemon canceled" error in your terminal
-        find daemon -name "main.cpp" -exec sed -i 's/if (!cryptonote::get_account_address_from_str(ad, net_type, vm\["start-mining"\].as<std::string>()))/if (false)/g' {} +
+        # 3. WILDCARD DAEMON BYPASS: Neutralize the Command Line Check
+        # This uses a 'fuzzy' match to find the check even if it's on multiple lines
+        find daemon -name "main.cpp" -exec sed -i '/get_account_address_from_str(ad, net_type, vm\["start-mining"\]/,/)/c\if (true)' {} +
 
         # 4. MINER BYPASS: Force Miner Acceptance
         sed -i 's/if (!get_account_address_from_str(ad, net_type, address))/if (true)/g' cryptonote_basic/miner.cpp
