@@ -3,7 +3,7 @@
 import http from 'http';
 import { URL } from 'url';
 
-const BASE_URL = 'http://localhost:5000';
+const BASE_URL = 'http://localhost:5001';
 
 function makeRequest(path) {
   return new Promise((resolve, reject) => {
@@ -65,7 +65,7 @@ async function main() {
     }
   } catch (err) {
     console.error('Error:', err.message);
-    console.error('Make sure the Arcana Coin server is running on port 5000');
+    console.error('Make sure the Arcana Coin server is running on port 5001');
     process.exit(1);
   }
 }
