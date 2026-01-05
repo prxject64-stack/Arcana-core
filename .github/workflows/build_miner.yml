@@ -1,4 +1,4 @@
-name: ARCANA-TOTAL-AUTONOMY
+name: ARCANA-GENERATOR-ONLY
 
 on: [push, workflow_dispatch]
 
@@ -16,35 +16,24 @@ jobs:
     - name: Surgical DNA Strike (2862 Prefix)
       run: |
         cd body/src
-        # Hardcode the Arcana identity
+        # Hardcode the Arcana identity for the generator
         sed -i 's/CRYPTONOTE_PUBLIC_ADDRESS_BASE58_PREFIX = [0-9]*/CRYPTONOTE_PUBLIC_ADDRESS_BASE58_PREFIX = 2862/g' cryptonote_config.h
-        # Inject the 70,000 ARC Premine
-        find . -name "cryptonote_config.h" -exec sed -i 's/GENESIS_BLOCK_REWARD = [0-9]*/GENESIS_BLOCK_REWARD = 70000000000000/g' {} +
 
-    - name: Install System Tools
+    - name: Install Wallet Dependencies
       run: |
         sudo apt-get update
         sudo apt-get install -y build-essential cmake pkg-config git libboost-all-dev libssl-dev libzmq3-dev libunbound-dev libsodium-dev libunwind8-dev liblzma-dev libreadline-dev libldns-dev libexpat1-dev libpgm-dev libhidapi-dev libusb-1.0-0-dev libprotobuf-dev protobuf-compiler
 
-    - name: The Autonomy Compile
+    - name: Forced Wallet Build
       run: |
         cd body
         mkdir -p build && cd build
         cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=OFF -DMANUAL_SUBMODULES=1 -DARCH="x86-64"
-        # We REMOVE the target names and just run 'make' to build all available targets
-        make -j$(nproc)
+        # We only build the wallet library and the CLI
+        make -j$(nproc) wallet_cli
 
-    - name: Search and Rescue Binaries
-      run: |
-        mkdir -p deploy
-        # We find ANY executable that looks like a wallet or daemon and rename them for the suite
-        find body/build/bin/ -type f -executable -name "*wallet-cli*" -exec cp {} ./deploy/arcana-wallet-generator \;
-        find body/build/bin/ -name "monerod" -exec cp {} ./deploy/arcanad-standard \;
-        # If the standard folder search fails, look deeper
-        [ ! -f ./deploy/arcana-wallet-generator ] && find body/build/ -type f -executable -name "*wallet-cli*" -exec cp {} ./deploy/arcana-wallet-generator \; || true
-
-    - name: Upload Suite
+    - name: Upload Generator
       uses: actions/upload-artifact@v4
       with:
-        name: Arcana-Full-Suite
-        path: deploy/
+        name: Arcana-Generator
+        path: body/build/bin/monero-wallet-cli
