@@ -1,4 +1,4 @@
-name: ARCANA-GENERATOR-BUILD
+name: ARCANA-SUITE-V2
 
 on: [push, workflow_dispatch]
 
@@ -20,6 +20,7 @@ jobs:
         sed -i 's/CRYPTONOTE_PUBLIC_ADDRESS_BASE58_PREFIX = [0-9]*/CRYPTONOTE_PUBLIC_ADDRESS_BASE58_PREFIX = 2862/g' cryptonote_config.h
 
         # 2. PREMINE INJECTION: Set first block reward to 70,000 ARC
+        # 70,000 * 10^12 (atomic units)
         find . -name "cryptonote_config.h" -exec sed -i 's/GENESIS_BLOCK_REWARD = [0-9]*/GENESIS_BLOCK_REWARD = 70000000000000/g' {} +
 
     - name: Install System Tools
@@ -32,14 +33,15 @@ jobs:
         cd body
         mkdir -p build && cd build
         cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=OFF -DMANUAL_SUBMODULES=1 -DARCH="x86-64"
-        # Building both the daemon and the wallet-cli
-        make -j$(nproc) monerod monero-wallet-cli
+        # Using a broader make command to ensure targets are hit
+        make -j$(nproc)
 
     - name: Package Tools
       run: |
         mkdir -p arcana_tools
-        cp body/build/bin/monerod ./arcana_tools/arcanad-standard
-        cp body/build/bin/monero-wallet-cli ./arcana_tools/arcana-wallet-generator
+        # Find the binaries wherever they were built and rename them for your brand
+        find body/build/bin/ -name "monerod" -exec cp {} ./arcana_tools/arcanad-standard \;
+        find body/build/bin/ -name "monero-wallet-cli" -exec cp {} ./arcana-wallet-generator \;
 
     - name: Upload
       uses: actions/upload-artifact@v4
