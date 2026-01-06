@@ -9,3 +9,4 @@ Tue Jan  6 02:09:12 AM UTC 2026: Forced log path to /root/miner.log and correcte
 Tue Jan  6 02:11:05 AM UTC 2026: Executed chmod +x and verified absolute log pathing.
 Tue Jan  6 02:18:53 AM UTC 2026: Removed redundant sudo wrappers to fix nested process stall.
 Tue Jan  6 02:20:41 AM UTC 2026: Switched to Nanopool due to ViaBTC XMR pool discontinuation.
+Tue Jan  6 02:23:48 AM UTC 2026: Verified Nanopool connection and monitored initial hashrate.
