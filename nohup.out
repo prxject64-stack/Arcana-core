@@ -1,0 +1,4 @@
+[2026-01-06 01:19:48.792] unable to open "/usr/local/bin/config.json".
+[2026-01-06 01:19:48.793] unable to open "/root/.xmrig.json".
+[2026-01-06 01:19:48.793] unable to open "/root/.config/xmrig.json".
+[2026-01-06 01:19:48.793] no valid configuration found, try https://xmrig.com/wizard
