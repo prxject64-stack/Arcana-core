@@ -7,3 +7,4 @@ Tue Jan  6 01:46:43 AM UTC 2026: Post-launch log audit performed.
 Tue Jan  6 01:51:54 AM UTC 2026: Forced --no-config flag to bypass JSON requirement.
 Tue Jan  6 02:09:12 AM UTC 2026: Forced log path to /root/miner.log and corrected JSON truncation.
 Tue Jan  6 02:11:05 AM UTC 2026: Executed chmod +x and verified absolute log pathing.
+Tue Jan  6 02:18:53 AM UTC 2026: Removed redundant sudo wrappers to fix nested process stall.
