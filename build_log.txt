@@ -1,2 +1,3 @@
 Thu Jan  8 01:49:21 AM CST 2026: Forced global linker flags to resolve persistent 83% link failure.
 Thu Jan  8 01:50:00 AM CST 2026: Forced global linker flags to resolve persistent 83% link failure.
+Thu Jan  8 01:59:22 AM CST 2026: Forced absolute archive paths inside a linker group to resolve 83% mark failure.
