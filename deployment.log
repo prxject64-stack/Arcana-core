@@ -1,1 +1,2 @@
 Wed Jan  7 09:29:59 PM CST 2026: Wiped /Arcana-core on server and initiated fresh recursive clone.
+Thu Jan  8 01:32:27 AM CST 2026: Resolved gen_ssl_cert link failure by explicitly chaining libevent.a in UNBOUND_LIBRARY.
