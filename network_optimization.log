@@ -1,0 +1,1 @@
+Fri Jan  9 11:28:48 AM CST 2026: Capped in_peers to 32 to prioritize final sync I/O.
