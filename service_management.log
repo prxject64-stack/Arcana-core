@@ -1,1 +1,2 @@
 Fri Jan  9 11:35:05 AM CST 2026: Created arcana-wallet.service. Configured dependency on arcanad.
+Fri Jan  9 11:50:49 AM CST 2026: Configured automated wallet unlocking via password-file.
